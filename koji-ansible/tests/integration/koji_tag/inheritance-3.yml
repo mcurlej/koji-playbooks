@@ -1,0 +1,49 @@
+# Ensure string priorities are interpreted as integers
+---
+
+- koji_tag:
+    name: inheritance-1-parent-a
+    state: present
+
+- koji_tag:
+    name: inheritance-1-parent-b
+    state: present
+
+- koji_tag:
+    name: inheritance-1-child
+    state: present
+    inheritance:
+    - parent: inheritance-1-parent-a
+      priority: 0
+    - parent: inheritance-1-parent-b
+      priority: 10
+  register: inheritance_3
+
+- name: assert koji_tag create tag and inheritance result
+  assert:
+    that:
+      - inheritance_3.changed
+      - inheritance_3.stdout_lines == []
+      - inheritance_3.diff.after.inheritance == ["   0   .... inheritance-1-parent-a", "  10   .... inheritance-1-parent-b"]
+# Python 2.7:
+# >>> sorted(("0", 10))
+# [10, '0']
+# Python 3.8:
+# >>> sorted(("0", 10))
+# Traceback (most recent call last):
+#   File "<stdin>", line 1, in <module>
+# TypeError: '<' not supported between instances of 'int' and 'str'
+- koji_tag:
+    name: inheritance-1-child
+    inheritance:
+    - parent: inheritance-1-parent-a
+      priority: "0"
+    - parent: inheritance-1-parent-b
+      priority: 10
+  register: inheritance_3
+
+# Assert that we don't detect any changes
+
+- assert:
+    that:
+      - inheritance_3.changed == False

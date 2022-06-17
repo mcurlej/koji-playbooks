@@ -1,0 +1,22 @@
+queue_rules:
+  - name: default
+    conditions:
+      - status-success=tox (2.7)
+      - status-success=tox (3.6)
+      - status-success=integration-tests (ga)
+      - status-success=test-collection
+
+pull_request_rules:
+  - name: automatic merge for master when CI passes
+    conditions:
+      - author=ktdreyer
+      - status-success=tox (2.7)
+      - status-success=tox (3.6)
+      - status-success=integration-tests (ga)
+      - status-success=test-collection
+      - base=master
+    actions:
+      queue:
+        name: default
+        method: rebase
+        rebase_fallback: none

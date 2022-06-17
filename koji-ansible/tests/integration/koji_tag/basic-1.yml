@@ -1,0 +1,67 @@
+# Create a basic koji tag exercising all our features.
+---
+
+- koji_tag:
+    name: basic-1-parent
+    state: present
+
+- name: Create an external repo for CentOS "CR"
+  koji_external_repo:
+    name: basic-1
+    url: http://mirror.centos.org/centos/7/cr/$arch/
+    state: present
+
+- koji_tag:
+    name: basic-1
+    state: present
+    inheritance:
+    - parent: basic-1-parent
+      priority: 0
+    external_repos:
+    - repo: basic-1
+      priority: 5
+    packages:
+      admin:
+      - ceph
+    groups:
+      build:
+        - bash
+        - coreutils
+    arches: x86_64 ppc64le
+    perm: admin
+    locked: false
+    extra:
+      mock.package_manager: dnf
+  register: basic
+
+# Assert that resutl is correct
+
+- name: assert koji_tag create tag result
+  assert:
+    that:
+      - basic.changed
+      - "'created tag id' in basic.stdout_lines.0"
+      - basic.stdout_lines.1 == "Adding basic-1 repo with prio 5 to tag basic-1"
+      - basic.stdout_lines.2 == "added pkg ceph"
+      - basic.stdout_lines.3 == "added group build"
+      - basic.stdout_lines.4 == "added pkg bash to group build"
+      - basic.stdout_lines.5 == "added pkg coreutils to group build"
+      - basic.diff.after.external_repos.0.external_repo_name == "basic-1"
+      - basic.diff.after.groups.0.name == "build"
+      - basic.diff.after.inheritance.0 == "   0   .... basic-1-parent"
+      - basic.diff.after.packages.0.owner_name == "admin"
+
+# Assert that this tag looks correct.
+
+- koji_call:
+    name: getTag
+    args: [basic-1]
+  register: taginfo
+
+- assert:
+    that:
+      - taginfo.data.name == 'basic-1'
+      - taginfo.data.arches == 'x86_64 ppc64le'
+      - not taginfo.data.locked
+      - taginfo.data.perm == 'admin'
+      - taginfo.data.extra['mock.package_manager'] == 'dnf'

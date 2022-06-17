@@ -1,0 +1,23 @@
+# Create a new archive type.
+---
+
+- name: Add dsc archive type
+  koji_archivetype:
+    name: dsc
+    description: Debian source control file
+    extensions: dsc
+    state: present
+
+# Assert that this archivetype looks correct.
+
+- koji_call:
+    name: getArchiveType
+    args:
+      type_name: dsc
+  register: archivetype
+
+- assert:
+    that:
+      - archivetype.data.name == 'dsc'
+      - archivetype.data.description == 'Debian source control file'
+      - archivetype.data.extensions == 'dsc'

@@ -15,10 +15,10 @@
     group: root
     mode: 0644
 
-- name: symlink "kojidev" alias for this profile
+- name: symlink python3 as python2 because koji
   file:
-    src: /usr/bin/koji
-    dest: /usr/bin/kojidev
+    src: /usr/bin/python3
+    dest: /usr/bin/python2
     state: link
 
 - name: determine unprivileged user
@@ -34,6 +34,12 @@
 - name: determine unprivileged uid number
   set_fact:
     unprivileged_uid: "{{ getent_passwd[unprivileged_user][1] }}"
+
+- name: symlink "kojidev" alias 
+  file:
+    src: "/home/{{ unprivileged_user}}/koji/cli/koji"
+    dest: /usr/bin/kojidev
+    state: link
 
 - name: "create /var/kerberos/krb5/user/{{ unprivileged_uid }} directories"
   file:

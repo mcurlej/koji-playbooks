@@ -118,13 +118,18 @@
 
 - name: copy /etc/httpd/conf.d/kojihub.conf
   copy:
-    src: files/kojihub.conf
+    src: files/kojihub-server.conf
     dest: /etc/httpd/conf.d/kojihub.conf
     owner: root
     group: root
     mode: 0644
   notify:
     - restart httpd
+
+- name: change permissions on koji hub
+  file:
+    path: /home/{{ unprivileged_user}}/koji/hub/kojixmlrpc.py
+    mode: 0777
 
 - name: copy /etc/koji-hub/hub.conf
   copy:

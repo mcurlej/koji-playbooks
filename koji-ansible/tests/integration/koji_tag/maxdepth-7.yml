@@ -1,0 +1,35 @@
+# Setting maxdepth to a stringify'd integer should not crash
+---
+
+- koji_tag:
+    name: maxdepth-7-parent
+    state: present
+
+- koji_tag:
+    name: maxdepth-7-child
+    state: present
+    inheritance:
+    - parent: maxdepth-7-parent
+      priority: 0
+      maxdepth: "20"
+  register: maxdepth_7
+
+- assert:
+    that:
+      - maxdepth_7.changed
+      - "'created tag id' in maxdepth_7.stdout_lines.0"
+      - maxdepth_7.diff.after.inheritance.0 == "   0   M... maxdepth-7-parent"
+      - "'maxdepth: 20' in maxdepth_7.diff.after.inheritance.1"
+
+# Assert that the inheritance relationship has no maxdepth.
+
+- koji_call:
+    name: getInheritanceData
+    args: [maxdepth-7-child]
+  register: inheritance
+
+- assert:
+    that:
+      - inheritance.data[0].name == 'maxdepth-7-parent'
+      - inheritance.data[0].maxdepth == 20
+
